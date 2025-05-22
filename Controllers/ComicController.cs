@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration.CommandLine;
 using MvcComicsExamen.Models;
 using MvcComicsExamen.Repositories;
+using MvcComicsExamen.Services;
 
 namespace MvcComicsExamen.Controllers
 {
@@ -9,9 +10,13 @@ namespace MvcComicsExamen.Controllers
     {
 
         private RepositoryComics repo;
-        public ComicController(RepositoryComics repo)
+        private ServiceStorageS3 serviceS3;
+
+        public ComicController(RepositoryComics repo, ServiceStorageS3 serviceS3)
         {
             this.repo = repo;
+            this.serviceS3 = serviceS3;
+
         }
 
         public async Task<IActionResult> Index()
@@ -36,11 +41,30 @@ namespace MvcComicsExamen.Controllers
         }
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Comic comic)
+        public async Task<IActionResult> Create(Comic comic, IFormFile ImageFile)
         {
-            await this.repo.AddComic(comic);
-            return RedirectToAction("Index");
-            return View(comic);
+            try
+            {
+                if (ImageFile != null && ImageFile.Length > 0)
+                {
+                    string fileName = Path.GetFileName(ImageFile.FileName);
+                    using (var stream = ImageFile.OpenReadStream())
+                    {
+                        await this.serviceS3.UploadFileAsync(fileName, stream);
+                    }
+                    comic.Imagen = fileName;
+                }
+
+                await this.repo.AddComic(comic);
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Error uploading image: " + ex.Message);
+                return View(comic);
+            }
         }
+
+
     }
 }
