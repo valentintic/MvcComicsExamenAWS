@@ -1,0 +1,36 @@
+﻿@model List<Comic>
+@{
+    ViewData["Title"] = "Comics List";
+}
+
+<h1>Comics List</h1>
+
+<p>
+    <a asp-action="Create" asp-controller="Comic">Create New Comic</a>
+</p>
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Image</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var comic in Model)
+    {
+        <tr>
+            <td>@comic.ID</td>
+            <td>@comic.Name</td>
+            <td>
+                <img src="@comic.Imagen" alt="@comic.Name" style="max-height:100px;" />
+            </td>
+            <td>
+                <a asp-action="Details" asp-route-id="@comic.ID">Details</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
